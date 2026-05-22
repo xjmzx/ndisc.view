@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["icon.svg"],
       manifest: {
-        name: "ndisc-view",
-        short_name: "ndisc-view",
+        name: "ndisc view",
+        short_name: "ndisc view",
         description:
           "Read-only viewer for an ndisc music discography on Nostr.",
         theme_color: "#0a0e13",

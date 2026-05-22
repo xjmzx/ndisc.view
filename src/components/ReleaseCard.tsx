@@ -4,7 +4,7 @@ import { RELEASE_KIND } from "../config";
 import type { Release } from "../lib/nostr";
 
 // A release counts as "newly published" if its event is younger than this.
-const NEW_WINDOW_DAYS = 14;
+const NEW_WINDOW_DAYS = 1;
 
 // Physical/digital indicator — mirrors the desktop RELEASES medium badge.
 function MediumBadge({ medium }: { medium: string }) {

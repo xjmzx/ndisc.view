@@ -10,19 +10,6 @@ interface Props {
   onRequireLogin: () => void;
 }
 
-// Detail fields shown when present, in display order.
-const FIELDS = [
-  ["year", "year"],
-  ["medium", "medium"],
-  ["format", "format"],
-  ["label", "label"],
-  ["catalog", "catalog"],
-  ["country", "country"],
-  ["condition", "condition"],
-  ["type", "type"],
-  ["category", "category"],
-] as const;
-
 // ♥ a release. Logged out, a tap opens the login sheet; logged in, it
 // posts / revokes a kind:7 reaction.
 function ReactionButton({ release, onRequireLogin }: Props) {
@@ -66,6 +53,42 @@ function ReactionButton({ release, onRequireLogin }: Props) {
   );
 }
 
+// One label/value pair inside the meta strip. Absent values show an em-dash
+// so the two columns keep their shape.
+function MetaCell({ label, value }: { label: string; value?: string }) {
+  return (
+    <>
+      <dt className="text-muted">{label}</dt>
+      <dd className="text-fg/90 truncate" title={value || undefined}>
+        {value || "—"}
+      </dd>
+    </>
+  );
+}
+
+// Slim two-column metadata strip beneath the cover — replaces the tall
+// field list. Column 1: year / medium / format; column 2: label / country
+// / category.
+function MetaBar({ release }: { release: Release }) {
+  return (
+    <div
+      className="mt-4 grid grid-cols-2 gap-x-5 rounded-lg bg-surface/60
+                 px-3 py-2.5"
+    >
+      <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs">
+        <MetaCell label="year" value={release.year} />
+        <MetaCell label="medium" value={release.medium} />
+        <MetaCell label="format" value={release.format} />
+      </dl>
+      <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs">
+        <MetaCell label="label" value={release.label} />
+        <MetaCell label="country" value={release.country} />
+        <MetaCell label="category" value={release.category} />
+      </dl>
+    </div>
+  );
+}
+
 // Detail body for one release. The app header is owned by App; this renders
 // only the scrolling content beneath it.
 export function ReleaseDetail({ release, onRequireLogin }: Props) {
@@ -85,34 +108,23 @@ export function ReleaseDetail({ release, onRequireLogin }: Props) {
         <ReactionButton release={release} onRequireLogin={onRequireLogin} />
       </div>
 
-      <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
-        {FIELDS.map(([key, label]) => {
-          const value = release[key];
-          if (!value) return null;
-          return (
-            <div key={label} className="contents">
-              <dt className="text-muted">{label}</dt>
-              <dd className="text-fg/90 break-words">{value}</dd>
-            </div>
-          );
-        })}
-      </dl>
-
-      {release.notes && (
-        <p className="mt-4 text-sm text-fg/80 whitespace-pre-wrap">
-          {release.notes}
-        </p>
-      )}
+      <MetaBar release={release} />
 
       {release.source && (
         <a
           href={release.source}
           target="_blank"
           rel="noreferrer"
-          className="mt-4 inline-block text-sm text-accent underline break-all"
+          className="mt-3 inline-block text-sm text-accent underline break-all"
         >
           {hostnameOf(release.source) ?? release.source}
         </a>
+      )}
+
+      {release.notes && (
+        <p className="mt-4 text-sm text-fg/80 whitespace-pre-wrap">
+          {release.notes}
+        </p>
       )}
     </main>
   );

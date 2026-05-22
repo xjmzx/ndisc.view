@@ -166,6 +166,7 @@ export default function App() {
                        transition-opacity hover:opacity-70"
           >
             n<span className="text-accent">disc</span>
+            <span className="font-normal text-muted"> view</span>
           </button>
           <div className="flex items-center gap-2 min-w-0">
             <span className="text-xs text-muted truncate">{ownerName}</span>
