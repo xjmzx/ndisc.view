@@ -2,6 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme palettes — channel triples consumed by tailwind.config.js as
+   rgb(var(--c-x) / <alpha-value>). :root is the fizx.uk scheme; .theme-upleb
+   — toggled by the ndisc title button — swaps to upleb.uk. Mirrors the
+   desktop ndisc themes. */
+:root {
+  --c-bg: 9 13 18;
+  --c-surface: 19 29 42;
+  --c-surface-hover: 30 45 61;
+  --c-fg: 240 246 252;
+  --c-muted: 107 122 141;
+  --c-accent: 122 240 205;
+  --c-mauve: 167 139 250;
+  --c-physical: 74 222 128;
+  --c-digital: 125 211 252;
+}
+
+.theme-upleb {
+  --c-bg: 10 15 21;
+  --c-surface: 22 32 45;
+  --c-surface-hover: 30 45 61;
+  --c-fg: 201 209 217;
+  --c-muted: 107 122 141;
+  --c-accent: 255 182 158;
+  --c-mauve: 255 179 71;
+  --c-physical: 74 222 128;
+  --c-digital: 255 120 73;
+}
+
 html,
 body,
 #root {

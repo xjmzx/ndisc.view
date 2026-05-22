@@ -1,8 +1,13 @@
+import { useState } from "react";
+import { Heart } from "lucide-react";
 import { CoverArt } from "./CoverArt";
+import { useReactions } from "../hooks/useReactions";
+import { RELEASE_KIND } from "../config";
 import { hostnameOf, type Release } from "../lib/nostr";
 
 interface Props {
   release: Release;
+  onRequireLogin: () => void;
 }
 
 // Detail fields shown when present, in display order.
@@ -18,9 +23,52 @@ const FIELDS = [
   ["category", "category"],
 ] as const;
 
-// Detail body for one release. The app header (permanent bar + back button)
-// is owned by App; this renders only the scrolling content beneath it.
-export function ReleaseDetail({ release }: Props) {
+// ♥ a release. Logged out, a tap opens the login sheet; logged in, it
+// posts / revokes a kind:7 reaction.
+function ReactionButton({ release, onRequireLogin }: Props) {
+  const { forAddr, react, unreact, canReact } = useReactions();
+  const addr = `${RELEASE_KIND}:${release.pubkey}:${release.d}`;
+  const { up, mine } = forAddr(addr);
+  const [busy, setBusy] = useState(false);
+
+  async function onTap() {
+    if (!canReact) {
+      onRequireLogin();
+      return;
+    }
+    setBusy(true);
+    try {
+      if (mine) await unreact(addr);
+      else await react(addr);
+    } catch {
+      /* swallow — a failed publish just leaves the count as-is */
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onTap}
+      disabled={busy}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                 bg-surface active:bg-surfaceHover transition-colors
+                 disabled:opacity-50"
+    >
+      <Heart
+        size={15}
+        className={mine ? "text-mauve" : "text-muted"}
+        fill={mine ? "currentColor" : "none"}
+      />
+      <span className="text-sm tabular-nums">{up}</span>
+    </button>
+  );
+}
+
+// Detail body for one release. The app header is owned by App; this renders
+// only the scrolling content beneath it.
+export function ReleaseDetail({ release, onRequireLogin }: Props) {
   return (
     <main className="flex-1 px-4 py-4">
       <CoverArt
@@ -29,10 +77,15 @@ export function ReleaseDetail({ release }: Props) {
         className="w-full aspect-square rounded-xl mb-4"
       />
 
-      <h2 className="text-lg font-bold leading-tight">{release.artist}</h2>
-      <p className="text-base text-fg/75 mb-4">{release.title}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold leading-tight">{release.artist}</h2>
+          <p className="text-base text-fg/75">{release.title}</p>
+        </div>
+        <ReactionButton release={release} onRequireLogin={onRequireLogin} />
+      </div>
 
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+      <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
         {FIELDS.map(([key, label]) => {
           const value = release[key];
           if (!value) return null;

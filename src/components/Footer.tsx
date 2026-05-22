@@ -1,9 +1,7 @@
 import { DEFAULT_RELAYS, OWNER_NPUB } from "../config";
 
-// Mirrors the desktop ndisc footer (stack line / identity / data source),
-// adapted to the viewer: it has no DB or keychain, so "identity" becomes the
-// owner npub being viewed and "data source" becomes the relay set. Stacked
-// vertically for the narrow mobile width.
+// Mirrors the desktop ndisc footer — what-it-is / whose-data / where-from —
+// as a left-aligned, padded band that wraps cleanly on a narrow screen.
 const relayHosts = DEFAULT_RELAYS.map((r) =>
   r.replace(/^wss?:\/\//, ""),
 ).join(" · ");
@@ -13,12 +11,22 @@ const ownerShort = `${OWNER_NPUB.slice(0, 12)}…${OWNER_NPUB.slice(-6)}`;
 export function Footer() {
   return (
     <footer
-      className="mt-8 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]
-                 flex flex-col gap-0.5 text-[11px] text-muted"
+      className="mt-8 border-t border-surface bg-surface/40 px-4 pt-3
+                 pb-[max(1.25rem,env(safe-area-inset-bottom))]
+                 text-[11px] leading-relaxed text-muted"
     >
-      <span>ndisc-mobile · React + Vite + Tailwind + Capacitor</span>
-      <span className="font-mono truncate">viewing {ownerShort}</span>
-      <span className="break-all">relays · {relayHosts}</span>
+      <p className="font-semibold tracking-tight text-fg/80">
+        n<span className="text-accent">disc</span>
+        <span className="font-normal text-muted"> · mobile viewer</span>
+      </p>
+      <p className="mt-1">
+        <span className="text-muted">viewing </span>
+        <span className="font-mono text-mauve break-all">{ownerShort}</span>
+      </p>
+      <p className="mt-1 break-words">
+        <span className="text-muted">relays </span>
+        <span className="font-mono text-fg/55">{relayHosts}</span>
+      </p>
     </footer>
   );
 }

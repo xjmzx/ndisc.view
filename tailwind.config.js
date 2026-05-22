@@ -1,16 +1,25 @@
 /** @type {import('tailwindcss').Config} */
+
+// Themeable palette — values come from CSS custom properties in src/index.css.
+// The channel-triple form keeps Tailwind's /opacity modifiers working
+// (e.g. bg-mauve/15 → rgb(var(--c-mauve) / 0.15)).
+const c = (v) => `rgb(var(${v}) / <alpha-value>)`;
+
 export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        bg: "#0a0e13",
-        surface: "#131d2a",
-        surfaceHover: "#1e2d3d",
-        fg: "#f0f6fc",
-        muted: "#6b7a8d",
-        accent: "#7af0cd",
-        mauve: "#a78bfa",
+        bg: c("--c-bg"),
+        surface: c("--c-surface"),
+        surfaceHover: c("--c-surface-hover"),
+        fg: c("--c-fg"),
+        muted: c("--c-muted"),
+        accent: c("--c-accent"),
+        mauve: c("--c-mauve"),
+        // Medium badges — physical green, digital blue.
+        physical: c("--c-physical"),
+        digital: c("--c-digital"),
       },
       fontFamily: {
         sans: ["Helvetica", "Arial", "system-ui", "sans-serif"],
