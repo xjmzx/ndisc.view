@@ -93,7 +93,7 @@ function MetaBar({ release }: { release: Release }) {
 // only the scrolling content beneath it.
 export function ReleaseDetail({ release, onRequireLogin }: Props) {
   return (
-    <main className="flex-1 px-4 py-4">
+    <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-4">
       <CoverArt
         src={release.image}
         alt={release.title}

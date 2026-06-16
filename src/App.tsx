@@ -147,7 +147,8 @@ export default function App() {
 
   return (
     <div
-      className="min-h-screen max-w-md mx-auto bg-bg text-fg flex flex-col"
+      className="min-h-screen w-full max-w-md md:max-w-3xl lg:max-w-5xl mx-auto
+                 bg-bg text-fg flex flex-col"
     >
       <header
         className="sticky top-0 z-20 bg-bg/95 backdrop-blur border-b
@@ -225,7 +226,7 @@ export default function App() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="search releases…"
             spellCheck={false}
-            className="w-3/5 mb-3 px-3 py-2 rounded-lg bg-surface text-fg
+            className="w-3/5 max-w-sm mb-3 px-3 py-2 rounded-lg bg-surface text-fg
                        text-sm outline-none placeholder:text-muted"
           />
         )}
@@ -284,7 +285,7 @@ export default function App() {
                   </button>
                 )}
               </div>
-              <ul className="flex flex-col gap-2">
+              <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                 {filtered.map((r) => (
                   <ReleaseCard
                     key={r.d}
@@ -293,7 +294,7 @@ export default function App() {
                   />
                 ))}
                 {filtered.length === 0 && (
-                  <li className="text-muted text-sm py-8 text-center">
+                  <li className="col-span-full text-muted text-sm py-8 text-center">
                     no matches
                   </li>
                 )}
