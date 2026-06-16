@@ -15,7 +15,7 @@ import { useSigner } from "./hooks/useSigner";
 import { ReleaseCard } from "./components/ReleaseCard";
 import { ReleaseRow } from "./components/ReleaseRow";
 import { ReleaseDetail } from "./components/ReleaseDetail";
-import { FilterRow } from "./components/FilterRow";
+import { CycleFilter, type CycleFacet } from "./components/CycleFilter";
 import { StatsSummary } from "./components/StatsSummary";
 import { ViewToggle, type ViewMode } from "./components/ViewToggle";
 import { LoginModal } from "./components/LoginModal";
@@ -94,12 +94,14 @@ export default function App() {
     }
   }, [theme]);
 
-  // Facet options derived from the whole library (not the filtered subset).
+  // Facet options + per-value counts derived from the whole library. Values
+  // are sorted by count (most-released first) so the cycler isn't arbitrary;
+  // decade is chronological and genre follows the canonical slug order.
   const facets = useMemo(() => {
     const labelCount = new Map<string, number>();
     const countryCount = new Map<string, number>();
-    const decades = new Set<string>();
-    const genres = new Set<string>();
+    const decadeCount = new Map<string, number>();
+    const genreCount = new Map<string, number>();
     for (const r of releases) {
       if (r.label) {
         labelCount.set(r.label, (labelCount.get(r.label) ?? 0) + 1);
@@ -108,24 +110,70 @@ export default function App() {
         countryCount.set(r.country, (countryCount.get(r.country) ?? 0) + 1);
       }
       const d = decadeOf(r.year);
-      if (d) decades.add(d);
-      for (const g of r.genres) genres.add(g);
+      if (d) decadeCount.set(d, (decadeCount.get(d) ?? 0) + 1);
+      for (const g of r.genres) genreCount.set(g, (genreCount.get(g) ?? 0) + 1);
     }
     const byCountDesc = (a: [string, number], b: [string, number]) =>
-      b[1] - a[1];
+      b[1] - a[1] || a[0].localeCompare(b[0]);
     const decadeKey = (d: string) => (d.startsWith("pre") ? 0 : parseInt(d, 10));
     return {
-      // Label facet is capped to the ten most-released labels.
-      labels: [...labelCount.entries()]
-        .sort(byCountDesc)
-        .slice(0, 10)
-        .map((e) => e[0]),
-      countries: [...countryCount.entries()].sort(byCountDesc).map((e) => e[0]),
-      decades: [...decades].sort((a, b) => decadeKey(a) - decadeKey(b)),
-      // Genre facet in canonical order, limited to slugs actually present.
-      genres: GENRE_ORDER.filter((g) => genres.has(g)) as string[],
+      label: {
+        options: [...labelCount.entries()].sort(byCountDesc).map((e) => e[0]),
+        counts: labelCount,
+      },
+      country: {
+        options: [...countryCount.entries()].sort(byCountDesc).map((e) => e[0]),
+        counts: countryCount,
+      },
+      decade: {
+        options: [...decadeCount.keys()].sort((a, b) => decadeKey(a) - decadeKey(b)),
+        counts: decadeCount,
+      },
+      genre: {
+        // Canonical slug order, limited to slugs actually present.
+        options: GENRE_ORDER.filter((g) => genreCount.has(g)) as string[],
+        counts: genreCount,
+      },
     };
   }, [releases]);
+
+  // One descriptor per facet for the cycling selector + active-chip strip.
+  const facetDefs: CycleFacet[] = [
+    {
+      key: "genre",
+      name: "genre",
+      options: facets.genre.options,
+      counts: facets.genre.counts,
+      selected: genreSel,
+      onToggle: makeToggle(setGenreSel),
+      labelFor: genreLabel,
+      colorFor: genreColor,
+    },
+    {
+      key: "label",
+      name: "label",
+      options: facets.label.options,
+      counts: facets.label.counts,
+      selected: labelSel,
+      onToggle: makeToggle(setLabelSel),
+    },
+    {
+      key: "country",
+      name: "country",
+      options: facets.country.options,
+      counts: facets.country.counts,
+      selected: countrySel,
+      onToggle: makeToggle(setCountrySel),
+    },
+    {
+      key: "decade",
+      name: "decade",
+      options: facets.decade.options,
+      counts: facets.decade.counts,
+      selected: decadeSel,
+      onToggle: makeToggle(setDecadeSel),
+    },
+  ];
 
   const filtered = useMemo(
     () =>
@@ -252,15 +300,70 @@ export default function App() {
             ‹ back
           </button>
         ) : (
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="search releases…"
-            spellCheck={false}
-            className="w-3/5 max-w-sm mb-3 px-3 py-2 rounded-lg bg-surface text-fg
-                       text-sm outline-none placeholder:text-muted"
-          />
+          <div className="pb-3 flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="search releases…"
+                spellCheck={false}
+                className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-surface text-fg
+                           text-sm outline-none placeholder:text-muted"
+              />
+              <ViewToggle value={view} onChange={setView} />
+            </div>
+            {releases.length > 0 && (
+              <>
+                <CycleFilter facets={facetDefs} />
+                <div className="flex items-center justify-between gap-2">
+                  <StatsSummary releases={releases} />
+                  {anyFilter && (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[11px] text-muted tabular-nums">
+                        {filtered.length} of {releases.length}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={clearFilters}
+                        className="text-[11px] text-accent"
+                      >
+                        clear
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {anyFilter && (
+                  <div className="flex flex-wrap gap-1">
+                    {facetDefs.flatMap((f) =>
+                      [...f.selected].map((v) => (
+                        <button
+                          key={`${f.key}:${v}`}
+                          type="button"
+                          onClick={() => f.onToggle(v)}
+                          title={`Remove ${f.name} filter`}
+                          className="inline-flex items-center gap-1 px-2 py-0.5
+                                     rounded-full bg-accent/15 text-accent text-[11px]"
+                        >
+                          {f.colorFor && (
+                            <span
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: f.colorFor(v) }}
+                              aria-hidden="true"
+                            />
+                          )}
+                          <span className="truncate max-w-[10rem]">
+                            {f.labelFor ? f.labelFor(v) : v}
+                          </span>
+                          <span aria-hidden="true">×</span>
+                        </button>
+                      )),
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         )}
       </header>
 
@@ -277,92 +380,36 @@ export default function App() {
             <p className="text-muted text-sm py-12 text-center">
               no releases found
             </p>
-          ) : (
-            <>
-              <StatsSummary releases={releases} className="mb-2 px-0.5" />
-              <div className="flex flex-col gap-1.5 mb-3">
-                <FilterRow
-                  name="label"
-                  index={0}
-                  options={facets.labels}
-                  selected={labelSel}
-                  onToggle={makeToggle(setLabelSel)}
+          ) : view === "grid" ? (
+            <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              {filtered.map((r) => (
+                <ReleaseCard
+                  key={r.d}
+                  release={r}
+                  onSelect={() => setSelected(r)}
                 />
-                <FilterRow
-                  name="country"
-                  index={1}
-                  options={facets.countries}
-                  selected={countrySel}
-                  onToggle={makeToggle(setCountrySel)}
-                />
-                <FilterRow
-                  name="decade"
-                  index={2}
-                  options={facets.decades}
-                  selected={decadeSel}
-                  onToggle={makeToggle(setDecadeSel)}
-                />
-                <FilterRow
-                  name="genre"
-                  index={3}
-                  options={facets.genres}
-                  selected={genreSel}
-                  onToggle={makeToggle(setGenreSel)}
-                  labelFor={genreLabel}
-                  dotColorFor={genreColor}
-                />
-              </div>
-              <div className="flex items-center justify-between gap-2 mb-2 min-h-[24px]">
-                <div className="flex items-center gap-2 min-w-0">
-                  {anyFilter && (
-                    <>
-                      <p className="text-[11px] text-muted tabular-nums shrink-0">
-                        {filtered.length} of {releases.length}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={clearFilters}
-                        className="text-[11px] text-accent shrink-0"
-                      >
-                        clear
-                      </button>
-                    </>
-                  )}
-                </div>
-                <ViewToggle value={view} onChange={setView} />
-              </div>
-              {view === "grid" ? (
-                <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {filtered.map((r) => (
-                    <ReleaseCard
-                      key={r.d}
-                      release={r}
-                      onSelect={() => setSelected(r)}
-                    />
-                  ))}
-                  {filtered.length === 0 && (
-                    <li className="col-span-full text-muted text-sm py-8 text-center">
-                      no matches
-                    </li>
-                  )}
-                </ul>
-              ) : (
-                <ul className="flex flex-col gap-1">
-                  {filtered.map((r) => (
-                    <ReleaseRow
-                      key={r.d}
-                      release={r}
-                      onSelect={() => setSelected(r)}
-                    />
-                  ))}
-                  {filtered.length === 0 && (
-                    <li className="text-muted text-sm py-8 text-center">
-                      no matches
-                    </li>
-                  )}
-                </ul>
+              ))}
+              {filtered.length === 0 && (
+                <li className="col-span-full text-muted text-sm py-8 text-center">
+                  no matches
+                </li>
               )}
-            </>
+            </ul>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {filtered.map((r) => (
+                <ReleaseRow
+                  key={r.d}
+                  release={r}
+                  onSelect={() => setSelected(r)}
+                />
+              ))}
+              {filtered.length === 0 && (
+                <li className="text-muted text-sm py-8 text-center">
+                  no matches
+                </li>
+              )}
+            </ul>
           )}
         </main>
       )}
