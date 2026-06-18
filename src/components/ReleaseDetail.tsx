@@ -3,6 +3,7 @@ import { Heart } from "lucide-react";
 import { CoverArt } from "./CoverArt";
 import { StarRow } from "./StarRow";
 import { GenreDotChip } from "./GenreDotChip";
+import { LeafDots } from "./LeafDots";
 import { useReactions } from "../hooks/useReactions";
 import { RELEASE_KIND } from "../config";
 import { hostnameOf, type Release } from "../lib/nostr";
@@ -81,7 +82,10 @@ function MetaBar({ release }: { release: Release }) {
         <MetaCell label="year" value={release.year} />
         <MetaCell label="medium" value={release.medium} />
         <MetaCell label="format" value={release.format} />
-        <MetaCell label="tracks" value={release.tracks?.toString()} />
+        <dt className="text-muted">tracks</dt>
+        <dd className="text-fg/90">
+          {release.tracks != null ? <LeafDots n={release.tracks} /> : "—"}
+        </dd>
       </dl>
       <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs">
         <MetaCell label="label" value={release.label} />
