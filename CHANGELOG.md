@@ -3,12 +3,23 @@
 **Contract:** `release.v2` @ `179fd5631454aa6c8feac5b20a27257f96b73413953e663c52ae7516f6a843fd`
 (2026-06 `discs` tag amendment)
 
+**Feed contract:** `feed.v1` @ `077fe7a6f70831ccf7c9640185c29e0b9c289ea22a1e4283064a1803ed1ea50c`
+(kind:31239 feed-note channel — frozen 2026-06-23, pinned by `schema/feed.v1.json.sha256`)
+
 ndisc-mobile is a read-only consumer of the **ndisc** Nostr wire contract. The
 contract is vendored verbatim under `schema/` and pinned by SHA-256. Source of
 truth: [xjmzx/ndisc](https://github.com/xjmzx/ndisc) — ndisc wins on any
 discrepancy. A change to the emitted event format is a coordinated
 `release.vN+1.json` bump, never an edit to a shipped version. This file tracks
 the shared `release.vN` contract; the app's own version lives in `package.json`.
+
+## feed.v1 — feed-note channel (kind:31239), vendored 2026-06-23
+
+- Source: [xjmzx/ndisc](https://github.com/xjmzx/ndisc) `schema/feed.v1.json`, frozen 2026-06-23. `schema/feed.v1.json` pinned by `schema/feed.v1.json.sha256` (`077fe7a6…`).
+- Adds the **feed-note channel**: kind:31239 notes (`d=glmps:<id>`, optional `a` release reference, repeatable `image`/`r`/`t`, `alt` fallback, body in `content`), the NIP-51 contributor registry (kind:30000, `d=glmps:contributors`), the NIP-72 per-note sign-off (kind:4550), and the client-side trust gate + NIP-09 kind:5 deletes. All authority roots on the single owner key.
+- Shared read template `src/lib/feed.ts` (`parseFeedNote`/`resolveFeed`/`releaseIdFromRef`) is byte-identical across ndisc / ndisc.view / glmps.
+- Surfaced as the **Current** view — kind:31239 notes matched against the discography; a note's `a` hydrates artist/title/cover from the local kind:31237, with a "release not in view" affordance when unmatched. Owner-only in v1.
+- Coordinated wave with glmps×2 — all consumers + ndisc cite the same SHA.
 
 ## release.v2 — `discs` tag amendment, re-vendored 2026-06-20
 
