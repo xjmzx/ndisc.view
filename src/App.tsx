@@ -31,6 +31,7 @@ import { Onboarding } from "./components/Onboarding";
 import { RelaySettings } from "./components/RelaySettings";
 import { FeedView } from "./components/FeedView";
 import { useRelays } from "./hooks/useRelays";
+import { useFeed } from "./hooks/useFeed";
 
 type Theme = "fizx" | "upleb";
 const THEME_KEY = "ndisc-mobile.theme";
@@ -68,6 +69,7 @@ export default function App() {
 
   const { onboarded } = useRelays();
   const { releases, loading } = useReleases(hex);
+  const { notes: feedNotes, loading: feedLoading } = useFeed(hex);
   const { status, logout } = useSigner();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Release | null>(null);
@@ -516,7 +518,12 @@ export default function App() {
           )}
         </main>
       ) : tab === "feed" ? (
-        <FeedView />
+        <FeedView
+          notes={feedNotes}
+          loading={feedLoading}
+          releases={releases}
+          onSelect={setSelected}
+        />
       ) : (
         <main className="flex-1 px-4 py-3">
           {loading && releases.length === 0 ? (
