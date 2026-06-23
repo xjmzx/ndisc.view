@@ -142,16 +142,18 @@ export function ReleaseDetail({ release, onRequireLogin }: Props) {
       <MetaBar release={release} />
 
       {showSource && (() => {
+        const src = release.source;
+        if (!src) return null;
         const platform = sourcePlatform(release);
         return (
           <a
-            href={release.source}
+            href={src}
             target="_blank"
             rel="noreferrer"
             className="mt-3 inline-block text-sm text-accent underline break-all"
             style={platform ? { color: platform.color } : undefined}
           >
-            {platform?.label ?? hostnameOf(release.source) ?? release.source}
+            {platform?.label ?? hostnameOf(src) ?? src}
           </a>
         );
       })()}
