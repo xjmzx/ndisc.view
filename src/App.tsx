@@ -6,12 +6,13 @@ import {
   type SetStateAction,
 } from "react";
 import {
-  Home,
+  BarChart3,
   KeyRound,
-  LineChart,
+  ListMusic,
   LogIn,
   RotateCw,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import { decadeOf, matchesSearch, npubToHex, type Release } from "./lib/nostr";
 import { GENRE_ORDER, genreColor, genreLabel } from "./lib/genre";
@@ -28,11 +29,20 @@ import { LoginModal } from "./components/LoginModal";
 import { Footer } from "./components/Footer";
 import { Onboarding } from "./components/Onboarding";
 import { RelaySettings } from "./components/RelaySettings";
+import { FeedView } from "./components/FeedView";
 import { useRelays } from "./hooks/useRelays";
 
 type Theme = "fizx" | "upleb";
 const THEME_KEY = "ndisc-mobile.theme";
 const VIEW_KEY = "ndisc-mobile.view";
+
+// Top-level views, switched from the header's three-button control.
+type Tab = "discography" | "stats" | "feed";
+const TABS: { key: Tab; Icon: typeof ListMusic; label: string }[] = [
+  { key: "discography", Icon: ListMusic, label: "Discography" },
+  { key: "stats", Icon: BarChart3, label: "Stats" },
+  { key: "feed", Icon: Sparkles, label: "Curated feed" },
+];
 
 // Returns a chip-toggle handler for one facet's Set state.
 function makeToggle(setter: Dispatch<SetStateAction<Set<string>>>) {
@@ -61,7 +71,7 @@ export default function App() {
   const { status, logout } = useSigner();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Release | null>(null);
-  const [showStats, setShowStats] = useState(false);
+  const [tab, setTab] = useState<Tab>("discography");
   const [loginOpen, setLoginOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -238,10 +248,10 @@ export default function App() {
     setGenreSel(new Set());
   }
 
-  // Home — back to the list, search + facet filters cleared.
-  function goHome() {
+  // Switch top-level view, closing any open release detail.
+  function selectTab(next: Tab) {
     setSelected(null);
-    clearFilters();
+    setTab(next);
   }
 
   // First run — choose relays before the discography loads.
@@ -274,26 +284,27 @@ export default function App() {
             <span className="font-normal text-muted"> view</span>
           </button>
           <div className="flex items-center gap-2 min-w-0">
-            {/* Stats toggle — minimal discography breakdown (genre/decade/
-                format). Sourced from ndisc's LineChart toolbar button. */}
-            <button
-              type="button"
-              onClick={() => {
-                setSelected(null);
-                setShowStats((s) => !s);
-              }}
-              title={showStats ? "Back to releases" : "Discography stats"}
-              aria-label={showStats ? "Back to releases" : "Discography stats"}
-              aria-pressed={showStats}
-              className={
-                "shrink-0 p-2 rounded-md transition-colors " +
-                (showStats
-                  ? "bg-mauve text-bg"
-                  : "bg-mauve/15 text-mauve hover:bg-mauve hover:text-bg")
-              }
-            >
-              <LineChart size={16} />
-            </button>
+            {/* Three-view switcher: discography / stats / curated feed. */}
+            <div className="flex items-center gap-0.5 rounded-lg bg-mauve/10 p-0.5 shrink-0">
+              {TABS.map(({ key, Icon, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => selectTab(key)}
+                  title={label}
+                  aria-label={label}
+                  aria-pressed={tab === key}
+                  className={
+                    "p-1.5 rounded-md transition-colors " +
+                    (tab === key
+                      ? "bg-mauve text-bg"
+                      : "text-mauve hover:bg-mauve/20")
+                  }
+                >
+                  <Icon size={16} />
+                </button>
+              ))}
+            </div>
             {status === "in" ? (
               <button
                 type="button"
@@ -329,21 +340,11 @@ export default function App() {
             >
               <Settings size={16} />
             </button>
-            <button
-              type="button"
-              onClick={goHome}
-              title="Home"
-              aria-label="Home"
-              className="shrink-0 p-2 rounded-md bg-mauve/15 text-mauve
-                         hover:bg-mauve hover:text-bg transition-colors"
-            >
-              <Home size={16} />
-            </button>
           </div>
         </div>
         {/* Contextual row beneath the bar — search in list view, back in
             detail view. Hidden in the stats view. */}
-        {showStats ? null : selected ? (
+        {selected ? (
           <button
             type="button"
             onClick={() => setSelected(null)}
@@ -352,7 +353,7 @@ export default function App() {
           >
             ‹ back
           </button>
-        ) : releases.length > 0 ? (
+        ) : tab !== "discography" ? null : releases.length > 0 ? (
           <div className="pb-3 flex flex-col gap-2">
             {/* Row 1 — refresh ("play next filter"), search, view toggle. */}
             <div className="flex items-stretch gap-2">
@@ -474,7 +475,7 @@ export default function App() {
           release={selected}
           onRequireLogin={() => setLoginOpen(true)}
         />
-      ) : showStats ? (
+      ) : tab === "stats" ? (
         <main className="flex-1 px-4 py-3">
           <div className="mb-3 flex items-baseline justify-between gap-4">
             <h2 className="font-mono text-sm text-fg">
@@ -482,7 +483,7 @@ export default function App() {
             </h2>
             <button
               type="button"
-              onClick={() => setShowStats(false)}
+              onClick={() => setTab("discography")}
               className="font-mono text-[11px] text-accent shrink-0"
             >
               ‹ back
@@ -514,6 +515,8 @@ export default function App() {
             <StatsBreakdown releases={releases} />
           )}
         </main>
+      ) : tab === "feed" ? (
+        <FeedView />
       ) : (
         <main className="flex-1 px-4 py-3">
           {loading && releases.length === 0 ? (
