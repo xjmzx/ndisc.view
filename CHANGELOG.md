@@ -1,7 +1,7 @@
 # Changelog
 
-**Contract:** `release.v2` @ `179fd5631454aa6c8feac5b20a27257f96b73413953e663c52ae7516f6a843fd`
-(2026-06 `discs` tag amendment)
+**Contract:** `release.v2` @ `91e16cf1da861ad3116d7d15ad13d7ae32fbdf26c367e2701236cb10cfc38962`
+(2026-06b genre round — 38 active slugs + additive `discs` tag)
 
 **Feed contract:** `feed.v1` @ `077fe7a6f70831ccf7c9640185c29e0b9c289ea22a1e4283064a1803ed1ea50c`
 (kind:31239 feed-note channel — frozen 2026-06-23, pinned by `schema/feed.v1.json.sha256`)
@@ -20,6 +20,12 @@ the shared `release.vN` contract; the app's own version lives in `package.json`.
 - Shared read template `src/lib/feed.ts` (`parseFeedNote`/`resolveFeed`/`releaseIdFromRef`) is byte-identical across ndisc / ndisc.view / glmps.
 - Surfaced as the **Current** view — kind:31239 notes matched against the discography; a note's `a` hydrates artist/title/cover from the local kind:31237, with a "release not in view" affordance when unmatched. Owner-only in v1.
 - Coordinated wave with glmps×2 — all consumers + ndisc cite the same SHA.
+
+## release.v2 — 2026-06b genre round, re-vendored 2026-06-23
+
+- Source: [xjmzx/ndisc @ 28cc116](https://github.com/xjmzx/ndisc). `schema/release.v2.json` SHA-256 `179fd563…` → `91e16cf1…`; `.sha256` re-pinned. Additive, **not** a v3 bump.
+- Genre vocabulary 35 → **38 active slugs**. Two 1:1 renames done additively (new slug active, old retired to `deprecated`, kept valid for legacy reads): **`poetry` → `spoken`**, **`spiritual` → `conscious`**. New slugs: **`disco`** + **`spoken`** (acoustic), **`garage`** (electronic), **`conscious`** + **`turntablism`** (tertiary).
+- `genre.ts` slug arrays updated (helpers unchanged); `index.css` gains `--c-g-{disco,spoken,garage,conscious,turntablism}` hue vars. `poetry`/`spiritual` colours retained for legacy rendering.
 
 ## release.v2 — `discs` tag amendment, re-vendored 2026-06-20
 
